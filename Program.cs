@@ -1,23 +1,17 @@
-using Microsoft.EntityFrameworkCore;
-using RestAPI_Work.Models;
-using System.Text.Json.Serialization;
+namespace RestAPI_Work
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
 
-var builder = WebApplication.CreateBuilder(args);
-
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-builder.Services.AddControllers().AddJsonOptions(x =>
-    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);  
-
-var app = builder.Build();
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+            var host = builder.Build();
+            host.Run();
+        }
+    }
+}

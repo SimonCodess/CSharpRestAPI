@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RestAPI_Work.Models;
+using RestAPI_Work.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RestAPI_Work.Controllers
@@ -11,27 +10,25 @@ namespace RestAPI_Work.Controllers
     [ApiController]
     public class GaragesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IGarageService _garageService;
 
-        public GaragesController(ApplicationDbContext context)
+        public GaragesController(IGarageService garageService)
         {
-            _context = context;
+            _garageService = garageService;
         }
 
         // GET: api/Garages
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Garage>>> GetGarages()
         {
-            return await _context.Garages.Include(g => g.Machines).ToListAsync();
+            return Ok(await _garageService.GetAllGaragesAsync());
         }
 
         // GET: api/Garages/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Garage>> GetGarage(int id)
         {
-            var garage = await _context.Garages
-                .Include(g => g.Machines)  
-                .FirstOrDefaultAsync(g => g.GarageId == id);
+            var garage = await _garageService.GetGarageByIdAsync(id);
 
             if (garage == null)
             {
@@ -45,29 +42,12 @@ namespace RestAPI_Work.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutGarage(int id, Garage garage)
         {
-            if (id != garage.GarageId)
+            if (id != garage.GarageId || !await _garageService.GarageExistsAsync(id))
             {
                 return BadRequest();
             }
 
-            _context.Entry(garage).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GarageExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _garageService.UpdateGarageAsync(id, garage);
             return NoContent();
         }
 
@@ -75,9 +55,7 @@ namespace RestAPI_Work.Controllers
         [HttpPost]
         public async Task<ActionResult<Garage>> PostGarage(Garage garage)
         {
-            _context.Garages.Add(garage);
-            await _context.SaveChangesAsync();
-
+            await _garageService.AddGarageAsync(garage);
             return CreatedAtAction(nameof(GetGarage), new { id = garage.GarageId }, garage);
         }
 
@@ -85,21 +63,13 @@ namespace RestAPI_Work.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGarage(int id)
         {
-            var garage = await _context.Garages.FindAsync(id);
-            if (garage == null)
+            if (!await _garageService.GarageExistsAsync(id))
             {
                 return NotFound();
             }
 
-            _context.Garages.Remove(garage);
-            await _context.SaveChangesAsync();
-
+            await _garageService.DeleteGarageAsync(id);
             return NoContent();
-        }
-
-        private bool GarageExists(int id)
-        {
-            return _context.Garages.Any(e => e.GarageId == id);
         }
     }
 }
