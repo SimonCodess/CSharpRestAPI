@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RestAPI_Work.Models;
+using RestAPI_Work.Requests;
+using RestAPI_Work.Responses;
+using RestAPI_Work.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RestAPI_Work.Controllers
@@ -11,25 +11,25 @@ namespace RestAPI_Work.Controllers
     [ApiController]
     public class MachinesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMachineService _machineService;
 
-        public MachinesController(ApplicationDbContext context)
+        public MachinesController(IMachineService machineService)
         {
-            _context = context;
+            _machineService = machineService;
         }
 
         // GET: api/Machines
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Machine>>> GetMachines()
+        public async Task<ActionResult<IEnumerable<MachineResponse>>> GetMachines()
         {
-            return await _context.Machines.ToListAsync();
+            return Ok(await _machineService.GetAllMachinesAsync());
         }
 
         // GET: api/Machines/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Machine>> GetMachine(int id)
+        public async Task<ActionResult<MachineResponse>> GetMachine(int id)
         {
-            var machine = await _context.Machines.FindAsync(id);
+            var machine = await _machineService.GetMachineByIdAsync(id);
 
             if (machine == null)
             {
@@ -41,41 +41,22 @@ namespace RestAPI_Work.Controllers
 
         // PUT: api/Machines/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutMachine(int id, Machine machine)
+        public async Task<IActionResult> PutMachine(int id, UpdateMachineRequest machineRequest)
         {
-            if (id != machine.MachineId)
+            if (!await _machineService.MachineExistsAsync(id))
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(machine).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MachineExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
+            await _machineService.UpdateMachineAsync(id, machineRequest);
             return NoContent();
         }
 
         // POST: api/Machines
         [HttpPost]
-        public async Task<ActionResult<Machine>> PostMachine(Machine machine)
+        public async Task<ActionResult<MachineResponse>> PostMachine(CreateMachineRequest machineRequest)
         {
-            _context.Machines.Add(machine);
-            await _context.SaveChangesAsync();
-
+            var machine = await _machineService.AddMachineAsync(machineRequest);
             return CreatedAtAction(nameof(GetMachine), new { id = machine.MachineId }, machine);
         }
 
@@ -83,21 +64,13 @@ namespace RestAPI_Work.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMachine(int id)
         {
-            var machine = await _context.Machines.FindAsync(id);
-            if (machine == null)
+            if (!await _machineService.MachineExistsAsync(id))
             {
                 return NotFound();
             }
 
-            _context.Machines.Remove(machine);
-            await _context.SaveChangesAsync();
-
+            await _machineService.DeleteMachineAsync(id);
             return NoContent();
-        }
-
-        private bool MachineExists(int id)
-        {
-            return _context.Machines.Any(e => e.MachineId == id);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using RestAPI_Work.Models;
+﻿using RestAPI_Work.Models.DBModels;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

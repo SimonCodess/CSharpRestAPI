@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using RestAPI_Work.Models;
+using RestAPI_Work.Data;
+using RestAPI_Work.Models.DBModels;
+using RestAPI_Work.Repositories;
 using RestAPI_Work.Services;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -24,6 +26,10 @@ namespace RestAPI_Work
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<IGarageService, GarageService>();
+            services.AddTransient<IMachineService, MachineService>();
+
+            services.AddTransient<IMachineRepository, MachineRepository>();
+
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));

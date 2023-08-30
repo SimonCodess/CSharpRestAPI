@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestAPI_Work.Models;
+using RestAPI_Work.Data;
+using RestAPI_Work.Models.DBModels;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;

@@ -1,45 +1,70 @@
-﻿using RestAPI_Work.Models;
-using RestAPI_Work.Repositories;
+﻿using RestAPI_Work.Data;
+using RestAPI_Work.Models.DBModels;
+using RestAPI_Work.Requests;
+using RestAPI_Work.Responses;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestAPI_Work.Services
 {
     public class GarageService : IGarageService
     {
-        private readonly IGarageRepository _repository;
+        private readonly ApplicationDbContext _context;
 
-        public GarageService(IGarageRepository repository)
+        public GarageService(ApplicationDbContext context)
         {
-            _repository = repository;
+            _context = context;
         }
 
-        public async Task<IEnumerable<Garage>> GetAllGaragesAsync()
+        public async Task<IEnumerable<GarageResponse>> GetAllAsync()
         {
-            return await _repository.GetAllAsync();
+            return await _context.Garages
+                .Select(g => new GarageResponse { GarageId = g.GarageId, Name = g.Name })
+                .ToListAsync();
         }
 
-        public async Task<Garage> GetGarageByIdAsync(int id)
+        public async Task<GarageResponse> GetByIdAsync(int id)
         {
-            return await _repository.GetByIdAsync(id);
+            var garage = await _context.Garages.FindAsync(id);
+            if (garage == null)
+            {
+                return null;
+            }
+            return new GarageResponse { GarageId = garage.GarageId, Name = garage.Name };
         }
 
-        public async Task AddGarageAsync(Garage garage)
+        public async Task<GarageResponse> CreateAsync(CreateGarageRequest garageRequest)
         {
-            await _repository.AddAsync(garage);
+            var newGarage = new Garage { Name = garageRequest.Name };
+            _context.Garages.Add(newGarage);
+            await _context.SaveChangesAsync();
+            return new GarageResponse { GarageId = newGarage.GarageId, Name = newGarage.Name };
         }
 
-        public async Task UpdateGarageAsync(int id, Garage garage)
+        public async Task<bool> UpdateAsync(int id, UpdateGarageRequest garageRequest)
         {
-            await _repository.UpdateAsync(garage);
+            var existingGarage = await _context.Garages.FindAsync(id);
+            if (existingGarage == null)
+            {
+                return false;
+            }
+            existingGarage.Name = garageRequest.Name;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public async Task DeleteGarageAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            await _repository.DeleteAsync(id);
-        }
-
-        public async Task<bool> GarageExistsAsync(int id)
-        {
-            return await _repository.ExistsAsync(id);
+            var garage = await _context.Garages.FindAsync(id);
+            if (garage == null)
+            {
+                return false;
+            }
+            _context.Garages.Remove(garage);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

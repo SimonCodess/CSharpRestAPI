@@ -1,4 +1,6 @@
-﻿using RestAPI_Work.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using RestAPI_Work.Requests;
+using RestAPI_Work.Responses;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,11 +8,10 @@ namespace RestAPI_Work.Services
 {
     public interface IGarageService
     {
-        Task<IEnumerable<Garage>> GetAllGaragesAsync();
-        Task<Garage> GetGarageByIdAsync(int id);
-        Task AddGarageAsync(Garage garage);
-        Task UpdateGarageAsync(int id, Garage garage);
-        Task DeleteGarageAsync(int id);
-        Task<bool> GarageExistsAsync(int id);
+        Task<IEnumerable<GarageResponse>> GetAllAsync();
+        Task<GarageResponse> GetByIdAsync(int id);
+        Task<GarageResponse> CreateAsync(CreateGarageRequest garageRequest);
+        Task<bool> UpdateAsync(int id, UpdateGarageRequest garageRequest);
+        Task<bool> DeleteAsync(int id);
     }
 }
